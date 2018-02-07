@@ -24,7 +24,6 @@ contract MathContract {
         a = result;
     }
     
-    //TODO if overflow multiple times?
     function multiply(int256 b) public {
         int256 result = a * b;
         assert(result >= a);

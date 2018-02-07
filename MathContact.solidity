@@ -36,10 +36,22 @@ contract MathContract {
         a /= b;
     }
     
-    //TOOD check for overflow
     function raise(uint256 b) public {
-        
-        //a = a ** b;
+        if (b == 0) {
+            a = 1;
+        }
+        if (a < 0) {
+            uint128 temp = uint128(-a);
+            assert((temp ** b) != 0);
+            if (b % 2 == 0) {
+                a = int256(temp ** b);
+            } else {
+                a = ((int256)(temp ** b)) * (-1);
+            }
+        } else {
+            assert((uint(a) ** b) != 0);
+            a = int256(uint(a) ** b);
+        }
     }
     
     function divideAndRetrieveDiff(int256 b) public {

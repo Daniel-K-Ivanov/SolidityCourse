@@ -4,7 +4,6 @@ contract MathContract {
     
     int256 a = 0;
     
-    
     function reInitVariable() public {
         a = 0;
     }
@@ -13,28 +12,33 @@ contract MathContract {
         return a;
     }
     
-    //TODO add overflow
     function add(int256 b) public {
-        a += b;
+        int256 result = a + b;
+        assert(result >= a);
+        a = result;
     }
     
-    //TODO add underflow
     function substract(int256 b) public {
-        a -= b;
+        int256 result = a - b;
+        assert(result <= a);
+        a = result;
     }
     
-    //TODO add overflow
+    //TODO if overflow multiple times?
     function multiply(int256 b) public {
-        a *= b;
+        int256 result = a * b;
+        assert(result >= a);
+        a = result;
     }
     
-    //TODO add divide by 0 check
     function divide(int256 b) public {
+        assert(b != 0);
         a /= b;
     }
     
     //TOOD check for overflow
     function raise(uint256 b) public {
+        
         //a = a ** b;
     }
     

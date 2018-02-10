@@ -1,0 +1,56 @@
+pragma solidity 0.4.19;
+
+contract BasicsOfContractsExercise3 {
+    
+    address owner;
+    uint sendAmount;
+    
+    event Withdraw (address indexed toAddress, uint amount);
+    
+    function BasicsOfContractsExercise3 () public {
+        owner = msg.sender;
+        sendAmount = 1 ether;
+    }
+    
+    modifier IsOwner {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    modifier IsAmountAvailable () {
+        require(this.balance >= sendAmount);
+        _;
+    }
+    
+    function() public payable {
+    }
+    
+    function getBalance() public view returns (uint) {
+        return this.balance;
+    }
+    
+    function changeSendAmount (uint _sendAmount) public IsOwner {
+        sendAmount = _sendAmount;
+    }
+    
+    function withdrawSendAmountOwner (uint amountToWithdraw) public IsOwner {
+        require(this.balance >= amountToWithdraw);
+        owner.transfer(amountToWithdraw);
+        Withdraw(msg.sender, amountToWithdraw);
+    }
+    
+    function withdrawSendAmount () public IsAmountAvailable {
+        msg.sender.transfer(sendAmount);
+        Withdraw(msg.sender, sendAmount);
+    }
+    
+    function sendSendAmount (address toAdress) public IsAmountAvailable {
+        toAdress.transfer(sendAmount);
+        Withdraw(toAdress, sendAmount);
+    }
+    
+    function destruct () public IsOwner {
+        selfdestruct(msg.sender);
+    }
+    
+}

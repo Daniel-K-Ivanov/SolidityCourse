@@ -1,0 +1,27 @@
+pragma solidity 0.4.19;
+
+contract OwnerTimeExercise {
+    
+    uint state;
+    address owner;
+    uint lastIncrement;
+    event Increment (uint timestamp, uint _state);
+    
+    function OwnerTimeExercise(uint _state) public {
+        state = _state;
+        owner = msg.sender;
+        lastIncrement = 0;
+    }
+    
+    function increment() public {
+        if (owner == msg.sender && (now - lastIncrement > 15 seconds)) {
+            state++;
+            lastIncrement = now;
+            Increment(lastIncrement, state);
+        }
+    }
+    
+    function getState () public returns (uint) {
+        return state;
+    }
+}

@@ -31,7 +31,7 @@ contract MathContract {
     }
     
     function divide(int256 b) public {
-        assert(b != 0);
+        require(b != 0);
         a /= b;
     }
     
@@ -54,6 +54,7 @@ contract MathContract {
     }
     
     function divideAndRetrieveDiff(int256 b) public {
+        require(b != 0);
         a %= b;
     }
 }

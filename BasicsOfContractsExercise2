@@ -1,0 +1,26 @@
+pragma solidity 0.4.19;
+
+contract ChangingOwnersExercise {
+    address owner;
+    
+    modifier OnlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    event OwnerChanged (address indexed oldOwner, address indexed _newOwner);
+    
+    function ChangingOwnersExercise () public{
+        owner = msg.sender;
+    }
+    
+    function getOwner () public view returns (address) {
+        return owner;
+    }
+    
+    function changeOwner (address newOwner) public  OnlyOwner {
+        address oldOwner = owner;
+        owner = newOwner;
+        OwnerChanged(oldOwner, newOwner);
+    }
+}

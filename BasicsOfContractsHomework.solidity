@@ -18,7 +18,7 @@ contract BasicsOfContractsHomework {
     
     modifier CanPurchaseService  {
         require(msg.value >= serviceCost);
-        require(now - lastPurchaseTimestamp > 20);
+        require(now - lastPurchaseTimestamp > 120);
         _;
     }
     
@@ -29,7 +29,7 @@ contract BasicsOfContractsHomework {
     
     modifier CanWithdraw(uint _amount) {
         require(_amount < 5 ether && this.balance > _amount);
-        require(now - lastWithdraw > 60);
+        require(now - lastWithdraw > 3600);
         _;
     }
     

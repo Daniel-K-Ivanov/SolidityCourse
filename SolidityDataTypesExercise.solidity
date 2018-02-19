@@ -21,7 +21,6 @@ contract SolidityDataTypesExercise {
    }
    
    modifier CanExecuteFn {
-       //Will lock permanently the contract
        require(currentState != State.LOCKED);
        
        if (currentState == State.RESTRICTED) {
@@ -43,7 +42,7 @@ contract SolidityDataTypesExercise {
        callerInfo = CallerInfo({counter : callerInfo.counter + 1, timestamp : now, caller : msg.sender});
    }
    
-   function changeState (uint stateIndex) public IsOwner CanExecuteFn{
+   function changeState (uint stateIndex) public IsOwner {
        currentState = State(stateIndex);
        ChangeStateEvent("The state of the contract have been changed!", currentState);
    }

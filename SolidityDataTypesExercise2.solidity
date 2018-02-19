@@ -1,0 +1,42 @@
+pragma solidity ^0.4.19;
+
+contract SolidityDataTypesExercise2 {
+   
+    struct Proposal {
+        uint proposionTimestamp;
+        uint amount;
+        uint acceptances;
+        
+        address receiver;
+    }
+    
+    address[] owners;
+    Proposal proposal;
+    
+    modifier onlyOwners {
+        //TODO
+        _;
+    }
+    
+    function () public payable {
+    }
+    
+    function SolidityDataTypesExercise2 (address[] _owners) public {
+        owners = _owners;
+    }
+    
+    function makeProposal(uint _amount, address _receiver) public onlyOwners {
+        proposal = Proposal({proposionTimestamp : now, amount : _amount, acceptances : 0, receiver : _receiver});
+    }
+    
+    function acceptProposal() public onlyOwners {
+        assert(owners[proposal.acceptances] == msg.sender);
+        proposal.acceptances++;
+        
+        //TODO 5 minutes constraint
+
+        if (proposal.acceptances == owners.length) {
+            proposal.receiver.transfer(proposal.amount);
+        }
+    }
+}

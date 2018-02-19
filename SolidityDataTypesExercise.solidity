@@ -1,0 +1,54 @@
+pragma solidity ^0.4.19;
+
+contract SolidityDataTypesExercise {
+   
+   struct CallerInfo {
+       uint counter;
+       uint timestamp;
+       address caller;
+   }
+   
+   enum State {LOCKED, UNLOCKED, RESTRICTED}
+   event ChangeStateEvent (string message, State newState);
+   
+   address owner;
+   State currentState;
+   CallerInfo public callerInfo;
+   
+   modifier IsOwner {
+       require(msg.sender == owner);
+       _;
+   }
+   
+   modifier CanExecuteFn {
+       //Will lock permanently the contract
+       require(currentState != State.LOCKED);
+       
+       if (currentState == State.RESTRICTED) {
+           assert(msg.sender == owner);
+       }
+       _;
+   }
+   
+   function () public payable CanExecuteFn {
+   }
+   
+   function SolidityDataTypesExercise () public {
+       owner = msg.sender;
+       callerInfo = CallerInfo({counter : 0, timestamp : now, caller : owner});
+       currentState = State.UNLOCKED;
+   }
+   
+   function increment() public CanExecuteFn {
+       callerInfo = CallerInfo({counter : callerInfo.counter + 1, timestamp : now, caller : msg.sender});
+   }
+   
+   function changeState (uint stateIndex) public IsOwner CanExecuteFn{
+       currentState = State(stateIndex);
+       ChangeStateEvent("The state of the contract have been changed!", currentState);
+   }
+   
+   function getState() public view returns (State) {
+       return currentState;
+   }
+}

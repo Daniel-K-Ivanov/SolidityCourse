@@ -5,17 +5,23 @@ contract SolidityDataTypesExercise2 {
     struct Proposal {
         uint proposionTimestamp;
         uint amount;
-        uint acceptances;
         
         address receiver;
     }
     
-    address[] owners;
-    Proposal proposal;
+    address[] public owners;
+    Proposal public proposal;
+    uint public nextToVote;
     
     modifier onlyOwners {
-        //TODO
-        _;
+        //Antipattern
+        bool isOwner = false;
+        for (uint i = 0; i < owners.length; i++) {
+            if (owners[i] == msg.sender) {
+                _;
+                break;
+            }
+        }
     }
     
     function () public payable {
@@ -25,17 +31,20 @@ contract SolidityDataTypesExercise2 {
         owners = _owners;
     }
     
-    function makeProposal(uint _amount, address _receiver) public onlyOwners {
-        proposal = Proposal({proposionTimestamp : now, amount : _amount, acceptances : 0, receiver : _receiver});
+    function propose(uint _amount, address _receiver) public onlyOwners {
+        proposal = Proposal({proposionTimestamp : now, amount : _amount, receiver : _receiver});
+        nextToVote = 0;
     }
     
-    function acceptProposal() public onlyOwners {
-        assert(owners[proposal.acceptances] == msg.sender);
-        proposal.acceptances++;
+    function accept() public onlyOwners {
+        require(proposal.proposionTimestamp != 0);
+        require(nextToVote < owners.length);
+        require(owners[nextToVote] == msg.sender);
+        require(now - proposal.proposionTimestamp < 5 minutes);
+        require(this.balance >= proposal.amount);
         
-        //TODO 5 minutes constraint
-
-        if (proposal.acceptances == owners.length) {
+        nextToVote++;
+        if (nextToVote == owners.length) {
             proposal.receiver.transfer(proposal.amount);
         }
     }

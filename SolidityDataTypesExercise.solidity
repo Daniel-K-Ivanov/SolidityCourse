@@ -12,7 +12,7 @@ contract SolidityDataTypesExercise {
    event ChangeStateEvent (string message, State newState);
    
    address owner;
-   State currentState;
+   State public currentState;
    CallerInfo public callerInfo;
    
    modifier IsOwner {
@@ -22,7 +22,6 @@ contract SolidityDataTypesExercise {
    
    modifier CanExecuteFn {
        require(currentState != State.LOCKED);
-       
        if (currentState == State.RESTRICTED) {
            assert(msg.sender == owner);
        }
@@ -45,9 +44,5 @@ contract SolidityDataTypesExercise {
    function changeState (uint stateIndex) public IsOwner {
        currentState = State(stateIndex);
        ChangeStateEvent("The state of the contract have been changed!", currentState);
-   }
-   
-   function getState() public view returns (State) {
-       return currentState;
    }
 }

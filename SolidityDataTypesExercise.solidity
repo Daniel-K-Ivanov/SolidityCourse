@@ -33,7 +33,7 @@ contract SolidityDataTypesExercise {
    
    function SolidityDataTypesExercise () public {
        owner = msg.sender;
-       callerInfo = CallerInfo({counter : 0, timestamp : now, caller : owner});
+       callerInfo = CallerInfo({counter : 0, timestamp : 0, caller : 0x0});
        currentState = State.UNLOCKED;
    }
    
@@ -41,8 +41,8 @@ contract SolidityDataTypesExercise {
        callerInfo = CallerInfo({counter : callerInfo.counter + 1, timestamp : now, caller : msg.sender});
    }
    
-   function changeState (uint stateIndex) public IsOwner {
-       currentState = State(stateIndex);
+   function changeState (State stateIndex) public IsOwner {
+       currentState = stateIndex;
        ChangeStateEvent("The state of the contract have been changed!", currentState);
    }
 }

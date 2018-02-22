@@ -58,6 +58,7 @@ contract TokenHomework {
         //Switches State from CROWDSALE to OPEN
         if (now - creationTimestamp > 5 minutes) {
             currentState = State.OPEN;
+            assert(false);
         } else {
             uint tokensBought = msg.value / ETH_CONVERTOR * 5;
             

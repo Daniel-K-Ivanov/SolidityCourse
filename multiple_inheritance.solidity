@@ -1,0 +1,65 @@
+pragma solidity ^0.4.19;
+
+contract SafeMath {
+    
+    function add(uint a, uint b) internal pure returns (uint) {
+        uint c = a + b;
+        assert(c >= a);
+        return c;
+    }
+    
+    function substract (uint a, uint b) internal pure returns (uint) {
+        assert(b <= a);        
+        return a - b;
+    }
+    
+    function multiply (uint a, uint b) internal pure returns (uint) {
+        if (a == 0) {
+            return 0;
+        }
+        
+        uint c = a * b;
+        assert(c /a == b);
+        return c;
+    }
+}
+
+contract Owned {
+    address owner;
+    
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    function Owned () public {
+        owner = msg.sender;
+    }
+    
+    function changeOwner (address newOwner) public onlyOwner {
+        owner = newOwner;
+    }
+}
+
+contract Counter is Owned, SafeMath {
+    
+    uint state;
+    uint lastChange = now;
+    
+    function Counter() public {
+    }
+    
+    function chnageState() public onlyOwner {
+        state = add(state, now % 256);
+        state = multiply(state, substract(now, lastChange));
+        state = substract(state, block.gaslimit);
+        lastChange = now;
+    }
+}
+
+
+
+
+
+
+

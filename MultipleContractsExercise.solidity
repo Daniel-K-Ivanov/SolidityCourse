@@ -1,0 +1,70 @@
+pragma solidity ^0.4.19;
+
+
+contract Agent {
+    address master;
+    uint lastOrderTimestamp;
+    
+    modifier canExecuteOrder {
+        require(isReady());
+        _;
+    }
+    
+    modifier onlyMaster {
+        require(msg.sender == master);
+        _;
+    }
+    
+    function Agent (Master _master) public {
+        master = _master;
+        lastOrderTimestamp = 0;
+    }
+    
+    function executeOrder () public onlyMaster canExecuteOrder {
+        lastOrderTimestamp = now;
+    }
+    
+    function isReady () public view onlyMaster returns (bool){
+        return now - lastOrderTimestamp > 15 seconds;
+    }
+}
+
+contract Master {
+    
+    address owner;
+    mapping (address => bool) public agents;
+    
+    modifier onlyOwner  {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    modifier AgentExists (Agent _agent) {
+        require(agents[_agent]);
+        _;
+    }
+    
+    function Master () public {
+        owner = msg.sender;
+    }
+    
+    function createAgent () public onlyOwner returns (address) {
+        Agent newAgent = new Agent(this);
+        agents[newAgent] = true;
+        
+        return newAgent;
+    }
+    
+    function approveAgent (Agent agent) public onlyOwner {
+        agents[agent] = true;
+    }
+    
+    function giveOrder (Agent agent) public onlyOwner AgentExists(agent) {
+        agent.executeOrder();
+    }
+    
+    function queryOrder (Agent agent) public view AgentExists(agent) returns (bool) {
+        return agent.isReady();
+    }
+    
+}

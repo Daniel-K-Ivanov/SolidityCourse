@@ -1,0 +1,144 @@
+pragma solidity ^0.4.19;
+
+library MemberUtils {
+    
+    struct Member {
+        address adr;
+        uint lastDonationTimestamp;
+        uint lastDonationValue;
+        uint totalDonations;
+        bool isValue;
+    }
+    
+    struct PendingMember {
+        uint approvals;
+        bool isValue;
+    }
+    
+    struct MembersData {
+        mapping (address => Member) members;
+        uint numberOfMembers;
+    }
+    struct PendingMembersData { mapping (address => PendingMember) members; }
+    
+    function addNewMember (MembersData storage selfMembers, address adr) public returns (bool) {
+        if (selfMembers.members[adr].isValue) {
+            return false;
+        }
+        selfMembers.members[adr] = Member({adr : msg.sender, lastDonationTimestamp : 0, lastDonationValue : 0, totalDonations : 0, isValue : true});
+        selfMembers.numberOfMembers++;
+        return true;
+    }
+    
+    function removeMember (MembersData storage selfMembers, address adr) public {
+        delete selfMembers.members[adr];
+        selfMembers.numberOfMembers--;
+    }
+    
+    function isMember (MembersData storage selfMembers, address adr) public view returns (bool) {
+        return selfMembers.members[adr].isValue;
+    }
+    
+    function hasDonated (MembersData storage selfMembers, address adr) public view returns (bool) {
+        return now - selfMembers.members[adr].lastDonationTimestamp < 1 hours;
+    }
+    
+    function isMember (PendingMembersData storage selfPendingMembers, address adr) public view returns (bool) {
+        return selfPendingMembers.members[adr].isValue;
+    }
+    
+    function proposeMember (PendingMembersData storage selfPendingMembers, address adr) public returns (bool) {
+        if (selfPendingMembers.members[adr].isValue) {
+            return false;
+        }
+        
+        selfPendingMembers.members[adr] = PendingMember({approvals : 1, isValue : true});
+        return true;
+    }
+    
+    function voteForMember (PendingMembersData storage selfPendingMembers, address adr) public returns (uint) {
+        PendingMember storage pendingMember = selfPendingMembers.members[adr];
+        
+        assert(pendingMember.isValue);
+        pendingMember.approvals++;
+        return pendingMember.approvals;
+    }
+    
+    function remove (PendingMembersData storage selfPendingMembers, address adr) public {
+        delete selfPendingMembers.members[adr];
+    }
+}
+
+contract Owned {
+    address owner;
+    
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    function Owned () public {
+        owner = msg.sender;
+    }
+}
+
+contract Charity is Owned {
+    
+    using MemberUtils for MemberUtils.MembersData;
+    using MemberUtils for MemberUtils.PendingMembersData;
+    
+    MemberUtils.MembersData members;
+    MemberUtils.PendingMembersData pendingMembers;
+    uint requiredApprovals;
+    
+    modifier onlyMember {
+        require(members.isMember(msg.sender));
+        _;
+    }
+    
+    modifier isNotMember (address adr) {
+        require(!members.isMember(adr));
+        _;
+    }
+    
+    modifier isPendingMember (address adr) {
+        require(pendingMembers.isMember(adr));
+        _;
+    }
+    
+    modifier hasDonated {
+        if (members.hasDonated(msg.sender)) {
+            _;
+        }
+        members.removeMember(msg.sender);
+    }
+    
+    function() public payable {
+    }
+    
+    function Charity () public {
+        members.addNewMember(msg.sender);
+    }
+    
+    function proposeMember(address adr) public onlyMember isNotMember(adr) {
+        pendingMembers.proposeMember(adr);
+    }
+    
+    function removeMember (address adr) public onlyOwner {
+        members.removeMember(adr);
+    }
+    
+    function approvePendingMember(address adr) public onlyMember hasDonated isPendingMember(adr) {
+        uint votes = pendingMembers.voteForMember(adr);
+        
+        if (2 * votes > members.numberOfMembers) {
+            pendingMembers.remove(adr);
+            members.addNewMember(adr);
+        }
+    }
+    
+    function kill () public onlyOwner {
+        selfdestruct(this);
+    }
+    
+}

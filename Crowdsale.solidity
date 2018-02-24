@@ -14,7 +14,6 @@ contract TokenHomework {
     event tokenPurchaseEvent (address indexed adr, uint _amount);
     event exchangeTokensEvent (address indexed sender, address indexed receiver, uint _amount);
     
-    uint ETH_CONVERTOR = 1000000000000000000;
     address owner;
     uint creationTimestamp;
     State currentState;
@@ -60,7 +59,7 @@ contract TokenHomework {
             currentState = State.OPEN;
             assert(false);
         } else {
-            uint tokensBought = msg.value / ETH_CONVERTOR * 5;
+            uint tokensBought = msg.value / 1 ether * 5;
             
             //User already bought tokens
             if (balances[msg.sender].isValue) {

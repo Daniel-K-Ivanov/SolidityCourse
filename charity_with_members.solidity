@@ -10,62 +10,107 @@ library MemberUtils {
         bool isValue;
     }
     
-    struct PendingMember {
-        uint approvals;
-        bool isValue;
-    }
-    
     struct MembersData {
         mapping (address => Member) members;
         uint numberOfMembers;
     }
-    struct PendingMembersData { mapping (address => PendingMember) members; }
+   
+    //Adds new member if not member already
+    //Increases the number of members
+    //Sets lastDonationTimestamp to now, so that the first 1 hour starts counting at the moment of becoming member
     
-    function addNewMember (MembersData storage selfMembers, address adr) internal returns (bool) {
-        if (selfMembers.members[adr].isValue) {
+    function addNewMember (MembersData storage self, address adr) internal returns (bool) {
+        if (self.members[adr].isValue) {
             return false;
         }
-        selfMembers.members[adr] = Member({adr : msg.sender, lastDonationTimestamp : 0, lastDonationValue : 0, totalDonations : 0, isValue : true});
-        selfMembers.numberOfMembers++;
+        self.members[adr] = Member({adr : msg.sender, lastDonationTimestamp : now, lastDonationValue : 0, totalDonations : 0, isValue : true});
+        self.numberOfMembers++;
         return true;
     }
     
-    function removeMember (MembersData storage selfMembers, address adr) internal {
-        delete selfMembers.members[adr];
-        selfMembers.numberOfMembers--;
+    //Deletes member
+    //Decreases the number of members
+    
+    function removeMember (MembersData storage self, address adr) internal {
+        delete self.members[adr];
+        self.numberOfMembers--;
     }
     
-    function isMember (MembersData storage selfMembers, address adr) internal view returns (bool) {
-        return selfMembers.members[adr].isValue;
+    //Returns true if an address is a member
+    
+    function isMember (MembersData storage self, address adr) internal view returns (bool) {
+        return self.members[adr].isValue;
     }
     
-    function hasDonated (MembersData storage selfMembers, address adr) internal view returns (bool) {
-        return now - selfMembers.members[adr].lastDonationTimestamp < 1 hours;
+    //Returns true if a member has donated in the last 1 hour
+    
+    function hasDonated (MembersData storage self, address adr) internal view returns (bool) {
+        return now - self.members[adr].lastDonationTimestamp < 1 hours;
     }
     
-    function isMember (PendingMembersData storage selfPendingMembers, address adr) internal view returns (bool) {
-        return selfPendingMembers.members[adr].isValue;
+    //Adds donation info for a member
+    
+    function addDonation (MembersData storage self, address adr, uint value) internal {
+        self.members[adr].lastDonationTimestamp = now;
+        self.members[adr].lastDonationValue = value;
+        self.members[adr].totalDonations += value;
+    }
+}
+
+library Voting {
+    
+    struct Vote {
+        address pendingMemberAdr;
+        uint approvals;
+        bool isVoteOpen;
+        mapping(bytes32 => bool) votingHistory;
+        uint conductedVotings;
     }
     
-    function proposeMember (PendingMembersData storage selfPendingMembers, address adr) internal returns (bool) {
-        if (selfPendingMembers.members[adr].isValue) {
-            return false;
-        }
+    //Returns if a Voting for new member is currently open
+    
+    function isVotingOpen (Vote storage self) internal view returns(bool) {
+        return self.isVoteOpen;
+    }
+    
+    //Creates a vote for new member and increases the number of conducted votes so far    
+    
+    function proposeMember (Vote storage self, address _adr) internal {
+        assert(!isVotingOpen(self));
+        self.pendingMemberAdr = _adr;
+        self.approvals = 0;
+        self.conductedVotings++;
+        self.isVoteOpen = true;
+    }
+    
+    //Getter for the address of the member for which it is beeing voted 
+    
+    function isPendingMember (Vote storage self, address _adr) internal view returns (bool) {
+        return self.pendingMemberAdr == _adr;
+    }
+    
+    
+    //Checks that voting is open and that a voter did not voted in this voting
+    //Increases the approvals and marks the voter as voted
+    
+    function vote (Vote storage self, address voter) internal returns (uint) {
+        bytes32 key = keccak256(voter, self.conductedVotings);
+        assert(isVotingOpen(self) && !self.votingHistory[key]);
         
-        selfPendingMembers.members[adr] = PendingMember({approvals : 1, isValue : true});
-        return true;
+        self.approvals++;
+        self.votingHistory[key] = true;
+        return self.approvals;
     }
     
-    function voteForMember (PendingMembersData storage selfPendingMembers, address adr) internal returns (uint) {
-        PendingMember storage pendingMember = selfPendingMembers.members[adr];
-        
-        assert(pendingMember.isValue);
-        pendingMember.approvals++;
-        return pendingMember.approvals;
-    }
+    //Checks that voting is open
+    //Clears the vote data and increases the conductedVotings
     
-    function remove (PendingMembersData storage selfPendingMembers, address adr) internal {
-        delete selfPendingMembers.members[adr];
+    function resetVoteData (Vote storage self) internal {
+        assert(isVotingOpen(self));
+        delete self.pendingMemberAdr;
+        self.approvals = 0;
+        self.isVoteOpen = false;
+        self.conductedVotings++;
     }
 }
 
@@ -80,16 +125,16 @@ contract Owned {
     function Owned () public {
         owner = msg.sender;
     }
+    
 }
 
 contract Charity is Owned {
     
     using MemberUtils for MemberUtils.MembersData;
-    using MemberUtils for MemberUtils.PendingMembersData;
+    using Voting for Voting.Vote;
     
-    MemberUtils.MembersData members;
-    MemberUtils.PendingMembersData pendingMembers;
-    uint requiredApprovals;
+    MemberUtils.MembersData public members;
+    Voting.Vote vote;
     
     modifier onlyMember {
         require(members.isMember(msg.sender));
@@ -101,44 +146,72 @@ contract Charity is Owned {
         _;
     }
     
-    modifier isPendingMember (address adr) {
-        require(pendingMembers.isMember(adr));
+    modifier isPendingMember (address _adr) {
+        require(vote.isPendingMember(_adr));
         _;
     }
     
-    modifier hasDonated {
-        if (members.hasDonated(msg.sender)) {
-            _;
-        }
-        members.removeMember(msg.sender);
-    }
+    //Receives donations and records them
     
     function() public payable {
+        if (members.isMember(msg.sender) && isMembershipActive(msg.sender)) {
+            members.addDonation(msg.sender, msg.value);
+        }
     }
+    
+    //Constructor, adding the owner as a first member
     
     function Charity () public {
         members.addNewMember(msg.sender);
     }
     
-    function proposeMember(address adr) public onlyMember isNotMember(adr) {
-        pendingMembers.proposeMember(adr);
+    //Checks that there is no current voting 
+    //Checks that the member has active membership (donated in the last 1 hour)
+    //Creates new voting for a member
+    
+    function proposeNewMember(address adr) public onlyMember isNotMember(adr) {
+        require(!vote.isVotingOpen());
+        assert(isMembershipActive(msg.sender));
+        
+        vote.proposeMember(adr);
     }
     
+    //Removes member, executed only by the owner
+    //The owner cannot remove himself
+    
     function removeMember (address adr) public onlyOwner {
+        assert(msg.sender != owner);
         members.removeMember(adr);
     }
     
-    function approvePendingMember(address adr) public onlyMember hasDonated isPendingMember(adr) {
-        uint votes = pendingMembers.voteForMember(adr);
+    //Checks that a voting for a new member is open
+    //Votes for the specified member
+    //If the votes are enough, the vote closes and the address is added as a member
+    
+    function voteForPendingMember (address adr) public onlyMember isPendingMember(adr) {
+        require(vote.isVotingOpen());
         
+        uint votes = vote.vote(msg.sender);
         if (2 * votes > members.numberOfMembers) {
-            pendingMembers.remove(adr);
+            vote.resetVoteData();
             members.addNewMember(adr);
         }
     }
+    
+    //Destroys the contact
     
     function kill () public onlyOwner {
         selfdestruct(this);
     }
     
+    //internal helper function
+    //Checks if a member has donated and if not, it is been removed (excluding the owner)
+    
+    function isMembershipActive (address adr) internal returns (bool) {
+        if (!members.hasDonated(adr) && adr != owner) {
+            members.removeMember(adr);
+            return false;
+        }
+        return true;
+    }
 }

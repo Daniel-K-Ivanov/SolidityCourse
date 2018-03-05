@@ -1,0 +1,71 @@
+<html>
+	<head>
+		<script type="text/javascript" src="script.js"></script>
+	</head>
+	<body>
+		<div style="margin: auto; width: 70%">
+			<p id="message">Successfully connected to Ethereum blockchain!</p><br>
+			<h1>Pokemon Game</h1>
+			<hr>
+			<h3>Claim Pokemon</h3>
+			Claim Pokemon:
+			<select id="claimPokemonDD">
+			  <option value="0">Typhlosion</option>
+			  <option value="1">Rayquaza</option>
+			  <option value="2">Dragonite</option>
+			  <option value="3">Arcanine</option>
+			  <option value="4">Lugia</option>
+			  <option value="5">Gengar</option>
+			  <option value="6">Mew</option>
+			  <option value="7">Blastoise</option>
+			  <option value="8">Mewtwo</option>
+			  <option value="9">Charizard</option>
+			</select>
+			<input type="button" onclick="onClaimPressed()" value="Claim">
+
+			<br><br>
+			<hr>
+			<h3>View user`s pokemons</h3>
+			User Address:
+			<input type="text" id="addressInput" style="width:350px" placeholder="Enter address here">
+			<input type="button" onclick="onViewUserPokemons()" value="View">
+			<input type="button" onclick="onClearUserPokemons()" value="Clear">
+			<br><br>
+			<div id="pokemons" style="display:none">
+				<div id="pokemon_0" style="width:30%; display: inline-block; margin: 1%; text-align:center"><img src="images/Typhlosion.png">Typhlosion</div>
+				<div id="pokemon_1" style="width:30%; display: inline-block; margin: 1%; text-align:center"><img src="images/Rayquaza.png">Rayquaza</div>
+				<div id="pokemon_2" style="width:30%; display: inline-block; margin: 1%; text-align:center"><img src="images/Dragonite.png">Dragonite</div>
+				<div id="pokemon_3" style="width:30%; display: inline-block; margin: 1%; text-align:center"><img src="images/Arcanine.png">Arcanine</div>
+				<div id="pokemon_4" style="width:30%; display: inline-block; margin: 1%; text-align:center"><img src="images/Lugia.png">Lugia</div>
+				<div id="pokemon_5" style="width:30%; display: inline-block; margin: 1%; text-align:center"><img src="images/Gengar.png">Gengar</div>
+				<div id="pokemon_6" style="width:30%; display: inline-block; margin: 1%; text-align:center"><img src="images/Mew.png">Mew</div>
+				<div id="pokemon_7" style="width:30%; display: inline-block; margin: 1%; text-align:center"><img src="images/Blastoise.png">Blastoise</div>
+				<div id="pokemon_8" style="width:30%; display: inline-block; margin: 1%; text-align:center"><img src="images/Mewtwo.png">Mewtwo</div>
+				<div id="pokemon_9" style="width:30%; display: inline-block; margin: 1%; text-align:center"><img src="images/Charizard.png">Charizard</div>
+				<span id="noPokemons" style="display:none; color: red">Sorry, no pokemons for this user</span>
+			</div>
+			<hr>
+			<h3>View pokemon`s owners</h3>
+			Pokemon:
+			<select id="viewPokemonDD">
+			  <option value="0">Typhlosion</option>
+			  <option value="1">Rayquaza</option>
+			  <option value="2">Dragonite</option>
+			  <option value="3">Arcanine</option>
+			  <option value="4">Lugia</option>
+			  <option value="5">Gengar</option>
+			  <option value="6">Mew</option>
+			  <option value="7">Blastoise</option>
+			  <option value="8">Mewtwo</option>
+			  <option value="9">Charizard</option>
+			</select>
+			<input type="button" onclick="onViewPokemonUsers()" value="View">
+			<input type="button" onclick="onClearPokemonUsers()" value="Clear">
+			<div id="users" style="display:none">
+			</div>
+			<span id="noUsers" style="display:none; color: red">Sorry, no users for this pokemon</span>
+			<br><br>
+			<hr>
+		</div>
+	</body>
+</html>

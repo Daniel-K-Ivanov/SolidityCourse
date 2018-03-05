@@ -12,16 +12,6 @@ You need to **navigate to the truffle folder** of the project and run:
 truffle develop
 ```
 
-## Connecting to the local Ethereum node via `Node.js`
-
-Not to confuse `Node.js` with your Ethereum node, they have nothing in common.
-Navigate to the project directory and run:
-```
-node
-```
-
-This will put you in an interactive `Node.js` session, where you can load the web3 API and connect to the Ethereum node.
-
 ## Running the Pokemons dapp
 
 1. Navigate to the `pokemons_dapp` folder in the project and run:

@@ -49,7 +49,7 @@ contract Ownable {
     }
 }
 
-contract MemberVoting is Ownable{
+contract MemberVoting is Ownable {
     using VoteLib for VoteLib.Vote;
     
     struct Member {
@@ -58,7 +58,10 @@ contract MemberVoting is Ownable{
         bool isValue;
     }
     
-    bool initiliazed;   // Used for checking if init function has been called
+    bool initiliazed; 
+    uint initiliazedMembers;   // Used for checking if init function has been called
+    uint numberOfMembers;
+    
     uint totalImportance; // Sum of all importances of the members
     uint pendingFundsForWithdraw; // Sum of all funds that are pending in a vote. Prevents starting a proposal for withdraw if there are not enough funds
     mapping(address => Member) public members;
@@ -71,6 +74,16 @@ contract MemberVoting is Ownable{
     
     modifier onlyMember {
         require(members[msg.sender].isValue);
+        _;
+    }
+    
+    modifier isInitiliazed {
+        require(initiliazed);
+        _;
+    }
+    
+    modifier notInitialized {
+        require(!initiliazed);
         _;
     }
     
@@ -101,20 +114,31 @@ contract MemberVoting is Ownable{
     function MemberVoting () public{
     }
     
-    function init(Member[] _members) public onlyOwner {
-        require(!initiliazed);
+    function init(address[] _members) public onlyOwner notInitialized {
+        
+        require(_members.length >= 3);
         
         for (uint i = 0; i < _members.length; i++) {
-            Member memory currentMember = _members[i];
-            assert(currentMember.addr != owner);
-            totalImportance += currentMember.importance;
-            members[currentMember.addr] = Member({addr : currentMember.addr, importance : currentMember.importance, isValue : true});
+            assert(_members[i] != owner);
+            members[_members[i]] = Member({addr : _members[i], importance : 0, isValue : true});
         }
         
-        initiliazed = true;
+        numberOfMembers = _members.length;
     }
     
-    function propose(address _receiver, uint _amount) public onlyOwner hasEnoughFunds(_amount) {
+    function setImportance(address _adr, uint _importance) public onlyOwner notInitialized{
+        require(members[_adr].isValue);
+        
+        members[_adr].importance = _importance;
+        totalImportance += _importance;
+        
+        initiliazedMembers++;
+        if (initiliazedMembers == numberOfMembers) {
+            initiliazed = true;
+        }
+    }
+    
+    function propose(address _receiver, uint _amount) public isInitiliazed onlyOwner hasEnoughFunds(_amount) {
         //The address can be proposed only if there is no vote active for this address
         require(votes[_receiver].adr != _receiver || 
             (votes[_receiver].adr == _receiver && votes[_receiver].finished));
@@ -133,7 +157,7 @@ contract MemberVoting is Ownable{
         emit LogVoteCreated(_receiver);
     }
     
-    function vote(address _adr, bool isVoteFor) public onlyMember voteExists(_adr) hasNotVoted(_adr) {
+    function vote(address _adr, bool isVoteFor) public isInitiliazed onlyMember voteExists(_adr) hasNotVoted(_adr) {
         votes[_adr].update(msg.sender, isVoteFor, members[msg.sender].importance);
         emit LogVoteUpdate(msg.sender, isVoteFor);
         
@@ -146,7 +170,7 @@ contract MemberVoting is Ownable{
         }
     }
     
-    function withdraw () public isEligibleForWithdraw {
+    function withdraw () public isInitiliazed isEligibleForWithdraw {
         uint amountToWithdraw = votes[msg.sender].amount;
         
         assert(address(this).balance >= amountToWithdraw);

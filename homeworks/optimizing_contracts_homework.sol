@@ -59,9 +59,6 @@ contract MemberVoting is Ownable {
     }
     
     bool initiliazed; 
-    uint initiliazedMembers;   // Used for checking if init function has been called
-    uint numberOfMembers;
-    
     uint totalImportance; // Sum of all importances of the members
     uint pendingFundsForWithdraw; // Sum of all funds that are pending in a vote. Prevents starting a proposal for withdraw if there are not enough funds
     mapping(address => Member) public members;
@@ -111,31 +108,19 @@ contract MemberVoting is Ownable {
     function () public payable {
     }
     
-    function MemberVoting () public{
-    }
-    
-    function init(address[] _members) public onlyOwner notInitialized {
-        
+    function init(address[] _members, uint[] _importance) public onlyOwner notInitialized {
         require(_members.length >= 3);
+        require(_members.length == _importance.length);
+        
+        uint _totalImportance = 0;
         
         for (uint i = 0; i < _members.length; i++) {
             assert(_members[i] != owner);
-            members[_members[i]] = Member({addr : _members[i], importance : 0, isValue : true});
+            members[_members[i]] = Member({addr : _members[i], importance : _importance[i], isValue : true});
         }
         
-        numberOfMembers = _members.length;
-    }
-    
-    function setImportance(address _adr, uint _importance) public onlyOwner notInitialized{
-        require(members[_adr].isValue);
-        
-        members[_adr].importance = _importance;
-        totalImportance += _importance;
-        
-        initiliazedMembers++;
-        if (initiliazedMembers == numberOfMembers) {
-            initiliazed = true;
-        }
+        totalImportance = _totalImportance;
+        initiliazed = true;
     }
     
     function propose(address _receiver, uint _amount) public isInitiliazed onlyOwner hasEnoughFunds(_amount) {
